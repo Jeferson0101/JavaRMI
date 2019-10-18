@@ -20,13 +20,13 @@ public class MultplicacaoMatrizServerRMI {
 			CalculadoraMatriz lCalculadoraMatriz = new CalculadoraMatriz();
 			
 			System.setProperty("java.rmi.server.hostname", "127.0.0.1");
-			LocateRegistry.createRegistry(1099);
-			
+			LocateRegistry.createRegistry(6001);
+//			
 			System.out.print("\n\tRegistrando o objeto no RMI Registry");
 			
-			Naming.rebind("rmi://localhost:1099/CalculadoraMatriz", lCalculadoraMatriz);
+			Naming.rebind("rmi://127.0.0.1:6001/CalculadoraMatriz", lCalculadoraMatriz);
 			
-			System.out.print("\n\tAguardando requisicaoo...");
+			System.out.print("\n\tAguardando requisiçao...");
 			
 		} catch (RemoteException | MalformedURLException e) {
 			System.err.print("\n\tErro: " + e.getMessage());

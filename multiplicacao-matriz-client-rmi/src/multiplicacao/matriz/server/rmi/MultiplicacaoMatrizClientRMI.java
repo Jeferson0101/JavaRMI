@@ -1,48 +1,100 @@
 package multiplicacao.matriz.server.rmi;
 
+import java.net.MalformedURLException;
 import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 
+import multiplicacao.matriz.server.rmi.model.MultiplicacaoMatrizResult;
+import multiplicacao.matriz.server.rmi.util.FileUtil;
 import multiplicacao.matriz.server.rmi.util.MatrizUtil;
 
 public class MultiplicacaoMatrizClientRMI {
 	
+	private final static int mLinhas = 4096;
+	private final static int mColunas = 4096;
+	private static long[][] lMatrizC;
+	private static int divisoes = 4;
+	private static int cont = 0;
+	
 	public static void main(String[] args) {
-		System.out.print("\nIniciando cliente da CalculadoraRemota...");
+		System.out.println("\nIniciando cliente da CalculadoraRemota...");
 		try {
-			CalculadoraMatrizInterface lCalculadoraMatrizInterface;
+//			Carregando as matrizes;
+			long[][] lMatrizA = MatrizUtil.caregarMatriz(mLinhas, mColunas, "src/matA.txt");
+			long[][] lMatrizB = MatrizUtil.caregarMatriz(mLinhas, mColunas, "src/matB.txt");
+			lMatrizC = new long[mLinhas][mColunas];
 			
-//			Registra o gerencioador de segurança
+			int lInicio = mLinhas - mLinhas;
+			int lMetade = mLinhas / divisoes;
+			int lFinal = mLinhas;
 			
-			System.out.print("\nRegistrando o gerenciador de segurança...");
+			long [][] lMatrizPrimeiraParte = new long[lMetade][mLinhas];
+			long [][] lMatrizSegundaParte = new long[lMetade][mLinhas];
+			long [][] lMatrizTerceiraParte = new long[lMetade][mLinhas];
+			long [][] lMatrizQuartaParte = new long[lMetade][mLinhas];
+			
+//			Vamos dividir a matriz em duas partes, pois testaremos apenas em duas maquinas.
+			lMatrizPrimeiraParte = MatrizUtil.cortar(lMetade, lMatrizA, 0, 1024);
+			lMatrizSegundaParte = MatrizUtil.cortar(lMetade, lMatrizA, 1024, 2048);
+			lMatrizTerceiraParte = MatrizUtil.cortar(lMetade, lMatrizA, 2048, 3072);
+			lMatrizQuartaParte = MatrizUtil.cortar(lMetade, lMatrizA, 3072, 4096);
+
+//			Registra o gerencioador de seguran�a
+			System.out.println("Registrando o gerenciador de segurança...");
 			System.setSecurityManager(new SecurityManager());
+		
+//			Cria a interface com o servidor
 			
-//			Deveremos mudar o caminho para mandar em outra maquina
-			lCalculadoraMatrizInterface = (CalculadoraMatrizInterface) Naming.lookup("rmi://localhost:1099/CalculadoraMatriz");
-			long[] teste = lCalculadoraMatrizInterface.multiplicar(0, caregarMatriz("src/matA.txt"), caregarMatriz("src/matB.txt"));
-			System.out.print("Result: " + caregarMatriz(teste));
-		} catch (Exception e) {//(MalformedURLException | RemoteException | NotBoundException e) {
-			// TODO: handle exception
+			long lStartTime = System.currentTimeMillis();
+			executar("10.151.33.98:6000", 0, 1024, lMatrizPrimeiraParte, lMatrizB);
+			executar("10.151.33.80:6000", 1024, 2048, lMatrizSegundaParte, lMatrizB);
+			executar("10.151.33.162:6000", 2048, 3072, lMatrizTerceiraParte, lMatrizB);
+			executar("10.151.33.44:6001", 3072, 4096, lMatrizQuartaParte, lMatrizB);
+			
+			System.out.println("Aguarde...");
+
+			while (cont != 4) {
+				System.out.println("Calculando...");
+			}
+		
+			long lStopTime = System.currentTimeMillis();
+			
+			// Imprime o tempo de execu��o
+			System.out.println("\tTempo de execução: " + (lStopTime - lStartTime) + " ms");
+			System.out.println("\tTempo de execução: " + (lStopTime - lStartTime) / 1000 + " segundos");
+			System.out.println("\tTempo de execução: " + ((lStopTime - lStartTime) / 1000) / 60 + " minutos");
+
+			System.out.print("\nGravando arquivo da matriz C...");
+			MatrizUtil.gravar(lMatrizC, "src/matC.txt");
+			
+//			Gera o MD5
+			System.out.println("\nGerando MD5 da matriz C...");
+			FileUtil.gerarMD5("matC.txt", "src/matC.txt", "src/matC");
+		} catch (Exception e) { //(MalformedURLException | RemoteException | NotBoundException e) {
 			System.out.print("\n\tErro: " + e.getMessage());
 			System.exit(1);
 		}
 	}
 	
-	private static String caregarMatriz(long[] vetor) {
-		String resultado = "";
-		for(long valor : vetor) {
-			resultado += valor + ", ";
-		}
-		return resultado;
+	private static void executar (String ipPort, int aPosicaoInicial, int aPosicaoFinal, long aMatrizA[][], long aMatrizB[][]) {
+		Thread thread = new Thread() {
+			public void run() {
+				try {
+					MultiplicacaoMatrizResult lMatrizResult = conectarService(ipPort).multiplicar(aPosicaoInicial, aPosicaoFinal, aMatrizA, aMatrizB);
+					lMatrizC = MatrizUtil.tranformarMetade(lMatrizResult.mPosicaoInicial, lMatrizResult.mPosicaoFinal, lMatrizResult.mResult, lMatrizC);
+					cont++;
+				} catch (Exception e) { //(MalformedURLException | RemoteException | NotBoundException e) {
+					System.out.print("\n\tErro: " + e.getMessage());
+					System.exit(1);
+				}
+			}
+		};
+		thread.start();
 	}
 	
-	private static long[][] caregarMatriz(String aCaminho) {
-		long[][] mat = null;
-		try {
-			mat = MatrizUtil.carregar(2, 2, aCaminho);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-		return mat;
+	private static CalculadoraMatrizInterface conectarService(String aIPAndPort) throws MalformedURLException, RemoteException, NotBoundException {
+		return (CalculadoraMatrizInterface) Naming.lookup("rmi://"+ aIPAndPort +"/CalculadoraMatriz");
 	}
+
 }

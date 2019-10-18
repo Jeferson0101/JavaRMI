@@ -16,7 +16,7 @@ public class MatrizUtil {
 		FileReader file = new FileReader(aCaminho);//("src/matA.txt");
 		BufferedReader bufFile = new BufferedReader(file);
 		
-		// Lï¿½ a primeira linha
+		// Lê a primeira linha
 		String line = bufFile.readLine();
 		int lLinhas =  0;
 		int lColunas = 0;
@@ -27,7 +27,11 @@ public class MatrizUtil {
 				lLinhas++;
 				lColunas = 0;
 			}
-			line = bufFile.readLine();
+			if(lLinhas == aLinhas) {
+				line = null;
+			} else {
+				line = bufFile.readLine();
+			}
 		}
 		bufFile.close();
 
@@ -38,10 +42,10 @@ public class MatrizUtil {
 		try {
 			File fOut = new File(aCaminho);
 			BufferedWriter writer = new BufferedWriter(new FileWriter(fOut));
-			for (int i = 0; i < aMatrizResult[LINE].length; i++) {
+			for (int i = 0; i < aMatrizResult.length; i++) {
 				for (int j = 0; j < aMatrizResult[COLUNM].length; j++) {
 					writer.write(String.valueOf(aMatrizResult[i][j]));
-					if ((i ==  aMatrizResult[LINE].length - 1) && (j == aMatrizResult[COLUNM].length - 1)) {
+					if ((i ==  aMatrizResult.length - 1) && (j == aMatrizResult[COLUNM].length - 1)) {
 						continue;
 					} else {
 						writer.newLine();
@@ -57,5 +61,62 @@ public class MatrizUtil {
 		}
 		return true;
 	}
+	
+	public static String showVetor(long[] vetor) {
+		String resultado = "";
+		for(long valor : vetor) {
+			resultado += valor + ", ";
+		}
+		return resultado;
+	}
+	
+	public static long[][] caregarMatriz(final int aLinha, final int aColunas,String aCaminho) {
+		long[][] mat = null;
+		try {
+			mat = MatrizUtil.carregar(aLinha, aColunas, aCaminho);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return mat;
+	}
+	
+	public static long[] extrairLinha(int aLinha, long[][] aMatrizA) {
+		long[] lResultLines = new long[aMatrizA[COLUNM].length];
+		for (int indice = 0; indice < aMatrizA[COLUNM].length; indice++) {
+			lResultLines[indice] = aMatrizA[aLinha][indice];
+		}
+		return lResultLines;
+	}
 
+	public static long[][] cortar(int totalLinhas, long[][] aMatrizA, int aPosicaoInicial, int lPosicaoFInal) {
+		long[][] lMatriz = new long[totalLinhas][aMatrizA[COLUNM].length];
+		int aLinhaAtual = 0;
+		for (int indiceLinha = aPosicaoInicial; indiceLinha < lPosicaoFInal; indiceLinha++) {
+			for (int indiceColuna = 0; indiceColuna< aMatrizA[COLUNM].length; indiceColuna++) {
+				lMatriz[aLinhaAtual][indiceColuna] = aMatrizA[indiceLinha][indiceColuna];
+			}
+			aLinhaAtual++;
+		}
+		return lMatriz;
+	}
+	
+
+	public static long[][] converterVetorLinhaMatriz(int aLinha, long[] aVetor, long[][] aMatrizAtualizada) {
+		for (int indice = 0; indice < aVetor.length; indice++) {
+			aMatrizAtualizada[aLinha][indice] = aVetor[indice];
+		}
+		return aMatrizAtualizada;
+	}
+	
+	public static long[][] tranformarMetade(int aPosicaoInicial, int aPosicaoFinal, long[][] aMatrizCalculada, long[][] aMatrizAtualizada) {
+		int aLinhaAtual = 0;
+		for (int indice = aPosicaoInicial; indice < aPosicaoFinal; indice++) {
+			for(int indiceColuna = 0; indiceColuna < aMatrizCalculada[COLUNM].length; indiceColuna++) {
+				aMatrizAtualizada[indice][indiceColuna] = aMatrizCalculada[aLinhaAtual][indiceColuna];
+			}
+			aLinhaAtual++;
+		}
+		return aMatrizAtualizada;
+	}
 }

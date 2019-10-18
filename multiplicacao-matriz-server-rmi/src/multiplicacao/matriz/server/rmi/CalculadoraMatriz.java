@@ -3,6 +3,9 @@ package multiplicacao.matriz.server.rmi;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+import multiplicacao.matriz.server.rmi.model.MultiplicacaoMatrizResult;
+import multiplicacao.matriz.server.rmi.util.MatrizUtil;
+
 public class CalculadoraMatriz extends UnicastRemoteObject implements CalculadoraMatrizInterface {
 	
 	private static final long serialVersionUID = 1L;
@@ -12,18 +15,11 @@ public class CalculadoraMatriz extends UnicastRemoteObject implements Calculador
 	}
 
 	@Override
-	public long[] multiplicar(int aLinhaCalcular, long[][] aMatrizA, long[][] aMatrizB) {
-		long[] lResultLines = new long[aMatrizA[1].length];
-		for (int j = 0; j < aMatrizA[0].length; j++) {
-			for (int k = 0; k < aMatrizA[1].length; k++) {
-				lResultLines[j] = lResultLines[j] + (aMatrizA[aLinhaCalcular][k] * aMatrizB[k][j]);
-			}
-		}
-		return lResultLines;
+	public MultiplicacaoMatrizResult multiplicar(int aPosicaoInicial, int aPosicaoFinal, long[][] aMatrizA,
+			long[][] aMatrizB) throws RemoteException {
+		System.out.println("\nMultiplicar [] x [][]");
+		MultiplicacaoMatrizResult lMultiplicacaoMatrizResult = new MultiplicacaoMatrizResult(aPosicaoInicial, aPosicaoFinal);
+		lMultiplicacaoMatrizResult.mResult = MatrizUtil.multiplicar(aMatrizA, aMatrizB);
+		return lMultiplicacaoMatrizResult;
 	}
-	
-//	MultiplicacaoMatrizResult lMultiplicacaoMatrizResult = new MultiplicacaoMatrizResult(aLinhaCalcular);
-//	lMultiplicacaoMatrizResult.mResult = MatrizUtil.multiplicar(aLinhaCalcular, aMatriz, aMatrizB);
-//	return lMultiplicacaoMatrizResult;
-
 }

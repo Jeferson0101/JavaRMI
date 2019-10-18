@@ -3,6 +3,8 @@ package multiplicacao.matriz.server.rmi;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
+import multiplicacao.matriz.server.rmi.model.MultiplicacaoMatrizResult;
+
 public interface CalculadoraMatrizInterface extends Remote {
-	long[] multiplicar(int aLinhaCalcular, long aMatrizA[][], long aMatrizB[][]) throws RemoteException;
+	MultiplicacaoMatrizResult multiplicar(int aPosicaoInicial, int aPosicaoFinal, long aMatrizA[][], long aMatrizB[][]) throws RemoteException;
 }
